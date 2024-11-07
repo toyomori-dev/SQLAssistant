@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Assistant - Loja Esportiva</title>
+
+    <!-- Link para o Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Link para o Highlight.js para realce de código SQL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            resize: vertical;
+            background-color: #f7fafc;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: #4299e1;
+            outline: none;
+        }
+
+        button {
+            background-color: #4299e1;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: #3182ce;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            color: #68d391;
+        }
+
+        .error {
+            display: none;
+            margin-top: 1rem;
+            color: #e53e3e;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .result-container {
+            margin-top: 2rem;
+        }
+
+        .sql-query {
+            padding: 1rem;
+            background-color: #2d3748;
+            border-radius: 6px;
+            color: #f7fafc;
+            margin-top: 2rem;
+            display: none;
+            font-size: 1rem;
+        }
+
+        .data-result {
+            margin-top: 2rem;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        .data-table tr:hover {
+            background-color: #edf2f7;
+        }
+
+        .data-table td {
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+                width: 100%;
+            }
+
+            button {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Assistente de Dados - Loja Esportiva</h1>
+
+        <!-- Formulário de entrada -->
+        <div class="row">
+            <div class="col-12">
+                <div class="input-group">
+                    <label for="question">Faça sua pergunta sobre os dados:</label>
+                </div>
+                <div class="col-12">
+                    <textarea id="question" class="form-control" placeholder="Ex: Quais são os produtos mais vendidos?"></textarea>
+                </div>
+            </div>
+            <div class="col-12">
+                <button onclick="generateAndExecuteSQL()">Consultar Dados</button>
+            </div>
+        </div>
+
+        <!-- Exibição de estados de carregamento e erro -->
+        <div class="loading" id="loading">Processando sua pergunta...</div>
+        <div class="error" id="error"></div>
+
+        <!-- Exibição dos resultados -->
+        <div class="result-container">
+            <div class="sql-query" id="sqlQuery"></div>
+            <div class="data-result" id="dataResult"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS e Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        const API_URL = 'http://localhost:3000/query'; // URL da API backend
+
+        async function generateAndExecuteSQL() {
+            const question = document.getElementById('question').value;
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const sqlQuery = document.getElementById('sqlQuery');
+            const dataResult = document.getElementById('dataResult');
+
+            if (!question) {
+                showError("Por favor, digite uma pergunta.");
+                return;
+            }
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            sqlQuery.style.display = 'none';
+            dataResult.innerHTML = '';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Mostrar SQL gerado
+                sqlQuery.innerHTML = `<h2>SQL Gerado:</h2><pre><code class="language-sql">${data.sql}</code></pre>`;
+                sqlQuery.style.display = 'block';
+                hljs.highlightAll();
+
+                // Mostrar resultados em uma tabela
+                if (data.results && data.results.length > 0) {
+                    const table = createDataTable(data.results);
+                    dataResult.innerHTML = '<h2>Resultados:</h2>';
+                    dataResult.appendChild(table);
+                } else {
+                    dataResult.innerHTML = '<h2>Resultados:</h2><p>Nenhum resultado encontrado.</p>';
+                }
+
+            } catch (err) {
+                showError("Erro ao executar consulta: " + err.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function createDataTable(data) {
+            const table = document.createElement('table');
+            table.className = 'data-table table';
+
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                Object.values(row).forEach(value => {
+                    const td = document.createElement('td');
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            return table;
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "sql-assistant",
+  "version": "1.0.0",
+  "description": "A simple SQL assistant",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.21.1",
+    "mysql2": "^3.11.4",
+    "node-fetch": "^3.3.2"
+  }
+}

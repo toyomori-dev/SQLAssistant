@@ -1,0 +1,86 @@
+-- Criar banco de dados
+DROP DATABASE IF EXISTS loja_esportiva;
+CREATE DATABASE IF NOT EXISTS loja_esportiva;
+USE loja_esportiva;
+-- Criar tabela de Produtos
+CREATE TABLE IF NOT EXISTS produtos (
+    produto_id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    categoria VARCHAR(100),
+    preco DECIMAL(10, 2) NOT NULL,
+    estoque INT NOT NULL,
+    descricao TEXT
+);
+-- Criar tabela de Clientes
+CREATE TABLE IF NOT EXISTS clientes (
+    cliente_id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    telefone VARCHAR(20),
+    endereco VARCHAR(255),
+    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+-- Criar tabela de Compras
+CREATE TABLE IF NOT EXISTS compras (
+    compra_id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT,
+    data_compra TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(cliente_id)
+);
+-- Criar tabela de Itens de Compra
+CREATE TABLE IF NOT EXISTS itens_compra (
+    item_compra_id INT AUTO_INCREMENT PRIMARY KEY,
+    compra_id INT,
+    produto_id INT,
+    quantidade INT NOT NULL,
+    preco_unitario DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (compra_id) REFERENCES compras(compra_id),
+    FOREIGN KEY (produto_id) REFERENCES produtos(produto_id)
+);
+-- Inserir produtos esportivos
+INSERT INTO produtos (nome, categoria, preco, estoque, descricao) VALUES
+('Tênis de Corrida', 'Calçados', 299.99, 50, 'Tênis confortável para corrida de alta performance.'),
+('Raquete de Tênis', 'Raquetes', 180.50, 30, 'Raquete profissional de tênis de alto desempenho.'),
+('Bola de Futebol', 'Bolas', 99.99, 100, 'Bola de futebol oficial de couro sintético.'),
+('Camiseta de Futebol', 'Roupas', 69.90, 200, 'Camiseta leve e respirável para jogadores de futebol.'),
+('Chuteira de Futebol', 'Calçados', 249.90, 40, 'Chuteira de futebol com tração superior.'),
+('Caneleira', 'Acessórios', 39.99, 80, 'Caneleira de proteção para futebol.'),
+('Squeeze', 'Acessórios', 25.50, 150, 'Squeeze térmico para esportes.'),
+('Shorts de Corrida', 'Roupas', 79.90, 120, 'Shorts leves e respiráveis para corrida.'),
+('Tênis de Basquete', 'Calçados', 350.00, 25, 'Tênis com alta estabilidade para basquete.'),
+('Bola de Basquete', 'Bolas', 120.00, 70, 'Bola oficial de basquete.'),
+('Prancha de Surf', 'Esportes Aquáticos', 999.99, 15, 'Prancha de surf de alto desempenho.'),
+('Luvas de Boxe', 'Acessórios', 159.00, 60, 'Luvas de boxe para treino e competição.'),
+('Camiseta de Ginástica', 'Roupas', 49.90, 200, 'Camiseta de ginástica leve e confortável.'),
+('Capacete de Ciclismo', 'Acessórios', 199.00, 50, 'Capacete de segurança para ciclismo.'),
+('Bola de Vôlei', 'Bolas', 110.00, 50, 'Bola de vôlei profissional de alta qualidade.'),
+('Kit de Natação', 'Esportes Aquáticos', 130.00, 35, 'Kit completo com óculos, touca e sunga de natação.'),
+('Halteres', 'Fitness', 75.00, 60, 'Par de halteres para musculação.'),
+('Bicicleta', 'Ciclismo', 1200.00, 10, 'Bicicleta de passeio com câmbio de 7 marchas.'),
+('Bolsa de Esportes', 'Acessórios', 60.00, 100, 'Bolsa de esportes resistente para transporte de equipamentos.'),
+('Raquete de Ping Pong', 'Raquetes', 60.00, 40, 'Raquete de ping pong profissional para competições.');
+-- Inserir um cliente
+INSERT INTO clientes (nome, email, telefone, endereco) 
+VALUES ('João Silva', 'joao.silva@email.com', '(11) 99999-9999', 'Rua Exemplo, 123');
+-- Registrar uma compra
+START TRANSACTION;
+
+-- Inserir uma nova compra
+INSERT INTO compras (cliente_id, total) 
+VALUES (1, 500.00);  -- Supondo que o cliente com ID 1 fez uma compra no valor de 500,00
+
+-- Recuperar o ID da compra inserida
+SET @compra_id = LAST_INSERT_ID();
+
+-- Inserir os produtos comprados
+INSERT INTO itens_compra (compra_id, produto_id, quantidade, preco_unitario) 
+VALUES 
+(@compra_id, 1, 2, 299.99),  -- Tênis de Corrida (2 unidades)
+(@compra_id, 4, 1, 69.90);  -- Camiseta de Futebol (1 unidade)
+
+-- Atualizar o estoque
+UPDATE produtos SET estoque = estoque - 2 WHERE produto_id = 1;  -- Atualiza o estoque do Tênis de Corrida
+UPDATE produtos SET estoque = estoque - 1 WHERE produto_id = 4;  -- Atualiza o estoque da Camiseta de Futebol
+
+COMMIT;
