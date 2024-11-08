@@ -1,4 +1,4 @@
-Documentação de Instalação - SQL Assistant
+## Documentação de Instalação - SQL Assistant
 
 Este é um projeto que utiliza um servidor Node.js com Express para permitir consultas SQL interativas em um banco de dados MySQL. O projeto permite que o usuário faça perguntas em linguagem natural e receba resultados de banco de dados com base em suas perguntas.
 
